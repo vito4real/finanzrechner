@@ -1,0 +1,331 @@
+﻿@model FinanzRechner.WebUI.ViewModels.Products.ProductDetailsViewModel;
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<style>
+    /* Фиксируем ширину колонки с итоговой суммой для всех таблиц */
+    .col-sum {
+        width: 200px;
+        min-width: 200px;
+    }
+    /* Делаем так, чтобы подпись "Итого" всегда была по центру страницы */
+    .total-label {
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
+<h1>Details</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-dark disabled">Экспорт отчета:</button>
+        
+        <a asp-action="ExportToExcel" asp-route-id="@Model.Id" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-excel"></i> Excel
+        </a>
+        
+        <a asp-action="ExportToPdf" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+            <i class="bi bi-file-earmark-pdf"></i> PDF
+        </a>
+        
+        <a asp-action="ExportToWord" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+            <i class="bi bi-file-earmark-word"></i> Word
+        </a>
+    </div>
+</div>
+
+<h4>Product</h4>
+<hr />
+<dl class="row">
+    <dt class="col-sm-2">Designation</dt>
+    <dd class="col-sm-10">@Model.Designation</dd>
+
+    <dt class="col-sm-2">Name</dt>
+    <dd class="col-sm-10">@Model.Name</dd>
+</dl>
+
+<hr />
+<h4>BOM (Состав изделия)</h4>
+
+@if (Model.BomTree.Any())
+{
+    <style>
+        .bom-table thead tr {
+            border-bottom: 2px solid #000;
+        }
+    </style>
+    <table class="table bom-table">
+        <thead>
+            <tr>
+                <th>Обозначение</th>
+                <th>Название</th>
+                <th class="text-end">Кол-во</th>
+                <th class="text-end">Цена ед.</th>
+                <th class="text-center col-sum-fixed">Итого</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var node in Model.BomTree)
+            {
+                @* Важно: в partial _ProductBomTree нужно будет также 
+                   добавить ячейки для цены и суммы, чтобы дерево не "развалилось"
+                *@
+                <partial name="_ProductBomTree"
+                         model="node"
+                         view-data="@(new ViewDataDictionary(ViewData) { ["IndentPx"] = 0 })" />
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-info">
+                <td colspan="4" class="text-center">
+                    <strong>Итоговая стоимость компонентов (BOM):</strong>
+                </td>
+                <td class="text-center">
+                    @* Суммируем только элементы ПЕРВОГО уровня, чтобы не удваивать сумму вложенных *@
+                    <strong>@Model.BomTree.Sum(x => x.TotalPrice).ToString("N2")</strong>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+}
+else
+{
+    <p><em>Состав для данного изделия пока не задан.</em></p>
+}
+<hr />
+<h4>BOP (Техпроцесс изделия)</h4>
+
+@if (Model.BopLines.Any())
+{
+    <style>
+        .bop-table thead tr {
+            border-bottom: 2px solid #000;
+        }
+        .calc-formula {
+            font-size: 0.75rem;
+            color: #6c757d;
+            display: block;
+        }
+    </style>
+    <table class="table bop-table">
+        <thead>
+            <tr>
+                <th style="width:80px;">Seq</th>
+                <th>Операция</th>
+                <th>Оборудование (ставка/ч)</th>
+                <th>Исполнитель (ставка/ч)</th>
+                <th class="text-end">Время (мин)</th>
+                <th class="text-end">Расчет стоимости</th>
+                <th class="text-center">Стоимость</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var line in Model.BopLines.OrderBy(x => x.Sequence))
+            {
+                <tr>
+                    <td>@line.Sequence</td>
+                    <td>@line.Operation</td>
+                    <td>
+                        @line.WorkstationName <br />
+                        <small class="text-begin">(@line.WorkstationRate.ToString("N2"))</small>
+                    </td>
+                    <td>
+                        @line.JobTitle <br />
+                        <small class="text-begin">(@line.JobRate.ToString("N2"))</small>
+                    </td>
+                    <td class="text-end">@line.Duration.ToString("N2")</td>
+                    <td class="text-end">
+                        <span class="text-end">
+                            (@line.WorkstationRate.ToString("N0") + @line.JobRate.ToString("N0")) / 60 * @line.Duration.ToString("N2")
+                        </span>
+                    </td>
+                    <td class="text-center">@line.TotalCost.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-info">
+                <td colspan="6" class="total-label "><strong>Итоговая стоимость работ:</strong></td>
+                <td class="text-center col-sum"><strong>@Model.BopLines.Sum(l => l.TotalCost).ToString("N2")</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+}
+else
+{
+    <p><em>Техпроцесс для данного изделия пока не задан.</em></p>
+}
+
+<h4>Применяемость</h4>
+
+@if (Model.WhereUsed.Any())
+{
+    <style>
+        .where-used-table thead tr {
+            border-bottom: 1px solid #000; /* жирная линия */
+        }
+    </style>
+    <table class="table where-used-table">
+        <thead>
+            <tr>
+                <th>Обозначение</th>
+                <th>Название</th>
+                <th>Количество</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wu in Model.WhereUsed)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Details"
+                           asp-route-id="@wu.ParentProductId">
+                            @wu.ParentDesignation
+                        </a>
+                    </td>
+                    <td>@wu.ParentName</td>
+                    <td>@wu.Quantity</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p><em>Это изделие пока никуда не входит.</em></p>
+}
+
+<hr />
+<h4>Расход сырья и материалов</h4>
+
+@if (Model.Materials.Any())
+{
+    <table class="table table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Наименование</th>
+                <th class="text-end">Количество</th>
+                <th class="text-end">Цена за ед.</th>
+                <th class="text-end">Итоговая стоимость</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var mat in Model.Materials)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller= "Materials"
+                        asp-action="Details"
+                        asp-route-id="@mat.Id">
+                            @mat.MaterialName
+                        </a>
+                    </td>
+                    <td class="text-end">@mat.Quantity.ToString("G29")</td>
+                    <td class="text-end">@mat.UnitPrice.ToString("N2")</td>
+                    <td class="text-center">@mat.TotalCost.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-info">
+                <td colspan="3" class="total-label"><strong>Суммарная стоимость материалов на изделие:</strong></td>
+                <td class="text-center col-sum"><strong>@Model.Materials.Sum(m => m.TotalCost).ToString("N2")</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+}
+else
+{
+    <p><em>Для данного изделия расход сырья не задан.</em></p>
+}
+
+<hr />
+<h4>Итоговая себестоимость изделия</h4>
+
+<table class="table">
+    <thead>
+        <tr style="border-bottom: 2px solid #000;">
+            <th>Статья затрат</th>
+            <th class="text-center">Описание</th>
+            <th class="text-center col-sum-fixed">Сумма</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Прямые материалы</strong></td>
+            <td class="text-center">Сырье и материалы, закрепленные за этим изделием</td>
+            <td class="text-center">@Model.Materials.Sum(m => m.TotalCost).ToString("N2")</td>
+        </tr>
+        <tr>
+            <td><strong>Входящие узлы (BOM)</strong></td>
+            <td class="text-center">Себестоимость вложенных продуктов (со всеми их затратами)</td>
+            <td class="text-center">@Model.BomTree.Sum(x => x.TotalPrice).ToString("N2")</td>
+        </tr>
+        <tr>
+            <td><strong>Собственные работы (BOP)</strong></td>
+            <td class="text-center">Трудозатраты и станки именно этого этапа</td>
+            <td class="text-center">@Model.BopLines.Sum(l => l.TotalCost).ToString("N2")</td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr class="table-info">
+            <td colspan="2" class="text-center"><strong>Итоговая производственная себестоимость:</strong></td>
+            <td class="text-center">
+                <strong>
+                    @((Model.Materials.Sum(m => m.TotalCost) + 
+                       Model.BomTree.Sum(x => x.TotalPrice) + 
+                       Model.BopLines.Sum(l => l.TotalCost)).ToString("N2"))
+                </strong>
+            </td>
+        </tr>
+    </tfoot>
+</table>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".bom-toggle").forEach(function (toggle) {
+
+                toggle.addEventListener("click", function () {
+
+                    const currentRow = toggle.closest("tr");
+                    const table = currentRow.closest("table");
+
+                    // показываем/скрываем все дочерние строки
+                    let hide = toggle.textContent === "[-]";
+                    toggle.textContent = hide ? "[+]" : "[-]";
+
+                    let levelPadding = parseInt(currentRow.querySelector("td").style.paddingLeft);
+
+                    let rows = table.querySelectorAll("tr");
+                    let startHiding = false;
+
+                    for (let row of rows) {
+                        if (row === currentRow) {
+                            startHiding = true;
+                            continue;
+                        }
+
+                        if (!startHiding) continue;
+
+                        let pad = parseInt(row.querySelector("td")?.style.paddingLeft || "0");
+
+                        if (pad > levelPadding) {
+                            // child — hide/show
+                            row.style.display = hide ? "none" : "";
+                        } else {
+                            // reached sibling or parent
+                            break;
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

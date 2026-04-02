@@ -1,0 +1,65 @@
+﻿@model FinanzRechner.WebUI.ViewModels.Products.Material.MaterialDetailsViewModel
+
+@{
+    ViewData["Title"] = "Details - " + Model.Name;
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Material</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.UnitPrice)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.UnitPrice)
+        </dd>
+    </dl>
+</div>
+
+<hr />
+<h4>Применяемость в изделиях</h4>
+
+@if (Model.UsedInProducts != null && Model.UsedInProducts.Any())
+{
+    <table class="table table-sm table-hover mt-3">
+        <thead class="thead-light">
+            <tr>
+                <th>Обозначение</th>
+                <th>Наименование продукта</th>
+                <th>Количество</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usage in Model.UsedInProducts)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="@usage.ProductId">@usage.ProductDesignation</a>
+                    </td>
+                    <td>@usage.ProductName</td>
+                    <td>@usage.Quantity.ToString("G29")</td>
+                   
+                        
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Данный материал пока не используется ни в одном изделии.</p>
+}
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

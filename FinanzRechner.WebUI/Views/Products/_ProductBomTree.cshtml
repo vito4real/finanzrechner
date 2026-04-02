@@ -1,0 +1,38 @@
+﻿@using FinanzRechner.WebUI.ViewModels.Products.Bom
+@model ProductBomTreeViewModel
+
+<tr>
+    <td style="padding-left:@(ViewData["IndentPx"] ?? 0)px;">
+        @if (Model.Children.Any())
+        {
+            <span class="bom-toggle" style="cursor:pointer; margin-right:4px; font-weight:bold;">[-]</span>
+        }
+        else
+        {
+            <span style="display:inline-block; width:14px;"></span>
+        }
+
+        <a asp-action="Details" asp-route-id="@Model.ProductId">
+            @Model.Designation
+        </a>
+    </td>
+
+    <td>@Model.Name</td>
+    @* Добавляем недостающие колонки *@
+    <td class="text-end">@Model.Quantity.ToString("G29")</td>
+    <td class="text-end">@Model.UnitPrice.ToString("N2")</td>
+    <td class="text-center col-sum-fixed">@Model.TotalPrice.ToString("N2")</td>
+</tr>
+
+@if (Model.Children.Any())
+{
+    @* Используем ViewData вместо ViewBag для надежной передачи отступа в рекурсии *@
+    var nextIndent = (Convert.ToInt32(ViewData["IndentPx"] ?? 0)) + 30;
+
+    foreach (var child in Model.Children)
+    {
+        <partial name="_ProductBomTree"
+                 model="child"
+                 view-data="@(new ViewDataDictionary(ViewData) { ["IndentPx"] = nextIndent })" />
+    }
+}
