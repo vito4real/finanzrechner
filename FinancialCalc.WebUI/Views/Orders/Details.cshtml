@@ -1,0 +1,92 @@
+﻿@model FinancialCalc.WebUI.ViewModels.Products.Order.OrderDetailsViewModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<style>
+    /* Фиксируем ширину колонки с итоговой суммой */
+    .col-sum-fixed {
+        width: 200px;
+        min-width: 200px;
+    }
+</style>
+
+<h1>Details</h1>
+<div class="btn-group mb-3">
+    <a asp-action="ExportToExcel" asp-route-id="@Model.Id" class="btn btn-outline-success">Excel</a>
+    <a asp-action="ExportToPdf" asp-route-id="@Model.Id" class="btn btn-outline-danger">PDF</a>
+    <a asp-action="ExportToWord" asp-route-id="@Model.Id" class="btn btn-outline-primary">Word</a>
+</div>
+<div>
+    <h4>Order</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.OrderNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.OrderNumber)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ClientName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.ClientName)
+        </dd>
+    </dl>
+</div>
+
+<hr />
+<h4>Состав заказа (расчет себестоимости)</h4>
+
+@if (Model.Products != null && Model.Products.Any())
+{
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Обозначение</th>
+                <th>Наименование</th>
+                <th class="text-center">Количество</th>
+                <th class="text-end">Себестоимость ед.</th>
+                <th class="text-center col-sum-fixed">Итоговая стоимость</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Products)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@item.ProductId">
+                            @item.ProductDesignation
+                        </a>
+                    </td>
+                    <td>@item.ProductName</td>
+                    <td class="text-center">@item.Quantity</td>
+                    <td class="text-end">@item.UnitPrice.ToString("N2")</td>
+                    <td class="text-center">@item.TotalPrice.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-info">
+                <td colspan="4" class="text-center">
+                    <strong>Итоговая стоимость заказа:</strong>
+                </td>
+                <td class="text-center">
+                    <strong>@Model.TotalOrderCost.ToString("N2")</strong>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+}
+else
+{
+    <p class="text-muted">В данном заказе нет добавленных продуктов.</p>
+}
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a> |
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

@@ -1,0 +1,55 @@
+﻿@model FinancialCalc.WebUI.ViewModels.Products.Client.ClientDetailsViewModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Client</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+    </dl>
+</div>
+
+<hr />
+<h4>Заказы клиента</h4>
+
+@if (Model.Orders != null && Model.Orders.Any())
+{
+    <table class="table table-hover mt-3">
+        <thead class="thead-light">
+            <tr>
+                <th>Номер заказа</th>
+                <th class="text-end">Количество позиций</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.Orders)
+            {
+                <tr>
+                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@order.OrderId">@order.OrderNumber</a></td>
+                    <td class="text-end">
+                        @order.TotalProductsCount
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted"><em>У данного клиента еще нет оформленных заказов.</em></p>
+}
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

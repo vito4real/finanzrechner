@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FinancialCalc.Domain/FinanzRechner.Domain.csproj" />
+  <Project Path="FinancialCalc.Infrastructure/FinanzRechner.Infrastructure.csproj" />
+  <Project Path="FinancialCalc.WebUI/FinanzRechner.WebUI.csproj" />
+</Solution>
