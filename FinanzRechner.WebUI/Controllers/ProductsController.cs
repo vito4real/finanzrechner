@@ -12,6 +12,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using Xceed.Document.NET;
@@ -626,6 +627,8 @@ namespace FinanzRechner.WebUI.Controllers
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
+            var culture = new CultureInfo("de-DE");
+
             var product = await _context.Products
                 .AsNoTracking()
                 .Include(p => p.ProductMaterials).ThenInclude(pm => pm.Material)
@@ -646,6 +649,9 @@ namespace FinanzRechner.WebUI.Controllers
             decimal bomSum = bomTree.Sum(x => x.TotalPrice);
             decimal bopSum = bopLines.Sum(l => l.TotalOperationCost);
 
+            var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "80.55.1855.jpg");
+            var imageBytes = System.IO.File.ReadAllBytes(imagePath);
+
             var document = QuestPDF.Fluent.Document.Create(container =>
             {
                 container.Page(page =>
@@ -655,10 +661,17 @@ namespace FinanzRechner.WebUI.Controllers
                     {
                         row.RelativeItem().Column(col =>
                         {
-                            col.Item().Text("KOSTENKALKULATION").FontSize(18).SemiBold().FontColor(Colors.Blue.Medium);
-                            col.Item().Text($"{product.Name} ({product.Designation})").FontSize(12).Italic();
+                            col.Item().Text("KOSTENKALKULATION")
+                                .FontSize(18)
+                                .SemiBold()
+                                .FontColor(Colors.Blue.Medium);
+
+                            col.Item().Text($"{product.Name} ({product.Designation})")
+                                .FontSize(12)
+                                .Italic();
                         });
-                        row.RelativeItem().AlignRight().Text(DateTime.Now.ToString("dd.MM.yyyy HH:mm")).FontSize(10);
+
+                        row.ConstantItem(240).Height(120).Image(imageBytes);
                     });
 
                     page.Content().PaddingVertical(10).Column(col =>
@@ -669,26 +682,34 @@ namespace FinanzRechner.WebUI.Controllers
                         col.Item().Text("1. Direkte Materialien").FontSize(12).SemiBold();
                         col.Item().Table(table =>
                         {
-                            table.ColumnsDefinition(columns => {
-                                columns.RelativeColumn(4); columns.RelativeColumn(1);
-                                columns.RelativeColumn((float)1.5); columns.RelativeColumn((float)1.5);
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn((float)1.5);
+                                columns.RelativeColumn((float)1.5);
                             });
-                            table.Header(header => {
+
+                            table.Header(header =>
+                            {
                                 header.Cell().Element(CellStyle).Text("Bezeichnung");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Menge");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Einzelpreis");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Summe");
                             });
+
                             foreach (var m in product.ProductMaterials)
                             {
                                 table.Cell().Element(CellStyle).Text(m.Material.Name);
-                                table.Cell().Element(CellStyle).AlignRight().Text(m.Quantity.ToString("G29"));
-                                table.Cell().Element(CellStyle).AlignRight().Text(m.Material.UnitPrice.ToString("N2"));
-                                table.Cell().Element(CellStyle).AlignRight().Text((m.Quantity * m.Material.UnitPrice).ToString("N2"));
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{m.Quantity.ToString("N2", culture)} l");
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{m.Material.UnitPrice.ToString("N2", culture)} BYN/l");
+                                table.Cell().Element(CellStyle).AlignRight().Text((m.Quantity * m.Material.UnitPrice).ToString("N2", culture));
                             }
-                            table.Footer(footer => {
+
+                            table.Footer(footer =>
+                            {
                                 footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Gesamtkosten Materialien:");
-                                footer.Cell().Element(FooterStyle).AlignRight().Text(matSum.ToString("N2"));
+                                footer.Cell().Element(FooterStyle).AlignRight().Text(matSum.ToString("N2", culture));
                             });
                         });
 
@@ -696,26 +717,34 @@ namespace FinanzRechner.WebUI.Controllers
                         col.Item().Text("2. Stückliste (BOM)").FontSize(12).SemiBold();
                         col.Item().Table(table =>
                         {
-                            table.ColumnsDefinition(columns => {
-                                columns.RelativeColumn(4); columns.RelativeColumn(1);
-                                columns.RelativeColumn((float)1.5); columns.RelativeColumn((float)1.5);
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn((float)1.5);
+                                columns.RelativeColumn((float)1.5);
                             });
-                            table.Header(header => {
+
+                            table.Header(header =>
+                            {
                                 header.Cell().Element(CellStyle).Text("Artikel / Bezeichnung");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Menge");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Stückkosten");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Summe");
                             });
+
                             foreach (var node in bomTree)
                             {
                                 table.Cell().Element(CellStyle).Text($"{node.Designation} / {node.Name}");
-                                table.Cell().Element(CellStyle).AlignRight().Text(node.Quantity.ToString());
-                                table.Cell().Element(CellStyle).AlignRight().Text(node.UnitPrice.ToString("N2"));
-                                table.Cell().Element(CellStyle).AlignRight().Text(node.TotalPrice.ToString("N2"));
+                                table.Cell().Element(CellStyle).AlignRight().Text(node.Quantity.ToString("N2", culture));
+                                table.Cell().Element(CellStyle).AlignRight().Text(node.UnitPrice.ToString("N2", culture));
+                                table.Cell().Element(CellStyle).AlignRight().Text(node.TotalPrice.ToString("N2", culture));
                             }
-                            table.Footer(footer => {
+
+                            table.Footer(footer =>
+                            {
                                 footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Gesamtkosten Komponenten:");
-                                footer.Cell().Element(FooterStyle).AlignRight().Text(bomSum.ToString("N2"));
+                                footer.Cell().Element(FooterStyle).AlignRight().Text(bomSum.ToString("N2", culture));
                             });
                         });
 
@@ -723,51 +752,74 @@ namespace FinanzRechner.WebUI.Controllers
                         col.Item().Text("3. Arbeitsgänge (BOP)").FontSize(12).SemiBold();
                         col.Item().Table(table =>
                         {
-                            table.ColumnsDefinition(columns => {
-                                columns.RelativeColumn(4); columns.RelativeColumn(1);
-                                columns.RelativeColumn((float)1.5); columns.RelativeColumn((float)1.5);
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(4);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn((float)1.5);
+                                columns.RelativeColumn((float)1.5);
                             });
-                            table.Header(header => {
+
+                            table.Header(header =>
+                            {
                                 header.Cell().Element(CellStyle).Text("Arbeitsgang [Arbeitsplatz]");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Arbeitszeit");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Stundensatz");
                                 header.Cell().Element(CellStyle).AlignRight().Text("Kosten");
                             });
+
                             foreach (var bop in bopLines)
                             {
                                 string opName = GetOperationDisplayName(bop.Operation);
+
                                 table.Cell().Element(CellStyle).Text($"{opName} [{bop.Workstation.DisplayName}]");
-                                table.Cell().Element(CellStyle).AlignRight().Text(bop.Duration.ToString("N2"));
-                                table.Cell().Element(CellStyle).AlignRight().Text((bop.Workstation.MachineHourlyCost + bop.JobPosition.FinalHourlyRate).ToString("N2"));
-                                table.Cell().Element(CellStyle).AlignRight().Text(bop.TotalOperationCost.ToString("N2"));
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{bop.Duration.ToString("N2", culture)} Min.");
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{(bop.Workstation.MachineHourlyCost + bop.JobPosition.FinalHourlyRate).ToString("N2", culture)} BYN/h");
+                                table.Cell().Element(CellStyle).AlignRight().Text(bop.TotalOperationCost.ToString("N2", culture));
                             }
-                            table.Footer(footer => {
+
+                            table.Footer(footer =>
+                            {
                                 footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Gesamtkosten Arbeit:");
-                                footer.Cell().Element(FooterStyle).AlignRight().Text(bopSum.ToString("N2"));
+                                footer.Cell().Element(FooterStyle).AlignRight().Text(bopSum.ToString("N2", culture));
                             });
                         });
 
                         // --- ENDGÜLTIGE BERECHNUNG ---
                         col.Item().PaddingTop(20).AlignRight().Container().Width(250).Table(table =>
                         {
-                            table.ColumnsDefinition(c => { c.RelativeColumn(); c.RelativeColumn(); });
-                            table.Cell().Background(Colors.Blue.Lighten5).Padding(5).Text("GESAMTKOSTEN:").SemiBold();
-                            table.Cell().Background(Colors.Blue.Lighten4).Padding(5).AlignRight().Text($"{(matSum + bomSum + bopSum):N2} BYN").SemiBold();
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn();
+                                c.RelativeColumn();
+                            });
+
+                            table.Cell().Background(Colors.Blue.Lighten5).Padding(5).Text("Gesamtkosten:").SemiBold();
+                            table.Cell()
+                                .Background(Colors.Blue.Lighten4)
+                                .Padding(5)
+                                .AlignRight()
+                                .Text($"{(matSum + bomSum + bopSum).ToString("N2", culture)} BYN")
+                                .SemiBold();
                         });
                     });
 
-                    page.Footer().AlignCenter().Text(x => {
-                        x.Span("Seite "); x.CurrentPageNumber();
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.Span("Seite ");
+                        x.CurrentPageNumber();
                     });
                 });
             });
 
             byte[] pdfBytes = document.GeneratePdf();
-            return File(pdfBytes, "application/pdf", $"Details_{product.Designation}.pdf");
+            return File(pdfBytes, "application/pdf", $"Kostenkalkulation_{product.Designation}.pdf");
 
-            // Вспомогательные методы стилизации внутри метода или контроллера
-            static IContainer CellStyle(IContainer container) => container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(5).PaddingHorizontal(2);
-            static IContainer FooterStyle(IContainer container) => container.PaddingVertical(5).PaddingHorizontal(2);
+            static IContainer CellStyle(IContainer container) =>
+                container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(5).PaddingHorizontal(2);
+
+            static IContainer FooterStyle(IContainer container) =>
+                container.PaddingVertical(5).PaddingHorizontal(2);
         }
 
         [HttpGet]
