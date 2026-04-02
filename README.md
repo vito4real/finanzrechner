@@ -22,3 +22,7 @@ Die Anwendung orientiert sich an realen industriellen Lösungen (z. B. SAP/ERP-S
 - Lokalisierung nach deutschen Zahlenformaten  
 - realitätsnahe Kostenlogik  
 - PDF-Generierung auf industriellem Niveau  
+
+## Technologien
+
+ASP.NET Core, Entity Framework Core, PostgreSQL, QuestPDF
