@@ -7,40 +7,40 @@ namespace FinanzRechner.Domain.Enums
 {
     public enum OperationType
     {
-        [Display(Name ="Распиловка")]
+        [Display(Name = "Sägen")]
         Cutting = 1, // Распиловка
 
-        [Display(Name = "Токарная обработка")]
+        [Display(Name = "Drehen")]
         Turning = 2, // Токарная обработка
 
-        [Display(Name = "Фрезерная обработка")]
+        [Display(Name = "Fräsen")]
         Milling = 3, // Фрезерная обработка
 
-        [Display(Name = "Сверление")]
+        [Display(Name = "Bohren")]
         Drilling = 4, // Сверление
 
-        [Display(Name = "Сварка")]
+        [Display(Name = "Schweißen")]
         Welding = 5, // Сварка
 
-        [Display(Name = "Мойка")]
+        [Display(Name = "Waschen")]
         Washing = 6, // Мойка
 
-        [Display(Name = "Маркировка")]
+        [Display(Name = "Kennzeichnen")]
         Marking = 7, // Маркировка
 
-        [Display(Name = "Подсборка")]
+        [Display(Name = "Vormontage")]
         Subassembly = 8, // Подсборка
 
-        [Display(Name = "Сборка")]
+        [Display(Name = "Montage")]
         Assembly = 9, // Сборка
 
-        [Display(Name = "Покраска")]
+        [Display(Name = "Lackierung")]
         Painting = 10, // Покраска
 
-        [Display(Name = "Испытание")]
+        [Display(Name = "Prüfung")]
         Testing = 11, // Испытание
 
-        [Display(Name = "Упаковка")]
+        [Display(Name = "Verpackung")]
         Packaging = 12, // Упаковка
     }
 }

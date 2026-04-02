@@ -655,7 +655,7 @@ namespace FinanzRechner.WebUI.Controllers
                     {
                         row.RelativeItem().Column(col =>
                         {
-                            col.Item().Text("КАЛЬКУЛЯЦИОННАЯ КАРТА").FontSize(18).SemiBold().FontColor(Colors.Blue.Medium);
+                            col.Item().Text("KOSTENKALKULATION").FontSize(18).SemiBold().FontColor(Colors.Blue.Medium);
                             col.Item().Text($"{product.Name} ({product.Designation})").FontSize(12).Italic();
                         });
                         row.RelativeItem().AlignRight().Text(DateTime.Now.ToString("dd.MM.yyyy HH:mm")).FontSize(10);
@@ -665,8 +665,8 @@ namespace FinanzRechner.WebUI.Controllers
                     {
                         col.Spacing(15);
 
-                        // --- 1. ТАБЛИЦА МАТЕРИАЛОВ ---
-                        col.Item().Text("1. Прямые материалы").FontSize(12).SemiBold();
+                        // --- 1. TABELLE MATERIALIEN ---
+                        col.Item().Text("1. Direkte Materialien").FontSize(12).SemiBold();
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns => {
@@ -674,10 +674,10 @@ namespace FinanzRechner.WebUI.Controllers
                                 columns.RelativeColumn((float)1.5); columns.RelativeColumn((float)1.5);
                             });
                             table.Header(header => {
-                                header.Cell().Element(CellStyle).Text("Наименование");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Кол-во");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Цена");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Сумма");
+                                header.Cell().Element(CellStyle).Text("Bezeichnung");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Menge");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Einzelpreis");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Summe");
                             });
                             foreach (var m in product.ProductMaterials)
                             {
@@ -687,13 +687,13 @@ namespace FinanzRechner.WebUI.Controllers
                                 table.Cell().Element(CellStyle).AlignRight().Text((m.Quantity * m.Material.UnitPrice).ToString("N2"));
                             }
                             table.Footer(footer => {
-                                footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Итого по материалам:");
+                                footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Gesamtkosten Materialien:");
                                 footer.Cell().Element(FooterStyle).AlignRight().Text(matSum.ToString("N2"));
                             });
                         });
 
-                        // --- 2. ТАБЛИЦА BOM ---
-                        col.Item().Text("2. Входящие компоненты (BOM)").FontSize(12).SemiBold();
+                        // --- 2. TABELLE BOM ---
+                        col.Item().Text("2. Stückliste (BOM)").FontSize(12).SemiBold();
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns => {
@@ -701,10 +701,10 @@ namespace FinanzRechner.WebUI.Controllers
                                 columns.RelativeColumn((float)1.5); columns.RelativeColumn((float)1.5);
                             });
                             table.Header(header => {
-                                header.Cell().Element(CellStyle).Text("Обозначение / Название");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Кол-во");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Себест. ед.");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Итого");
+                                header.Cell().Element(CellStyle).Text("Artikel / Bezeichnung");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Menge");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Stückkosten");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Summe");
                             });
                             foreach (var node in bomTree)
                             {
@@ -714,13 +714,13 @@ namespace FinanzRechner.WebUI.Controllers
                                 table.Cell().Element(CellStyle).AlignRight().Text(node.TotalPrice.ToString("N2"));
                             }
                             table.Footer(footer => {
-                                footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Итого по компонентам:");
+                                footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Gesamtkosten Komponenten:");
                                 footer.Cell().Element(FooterStyle).AlignRight().Text(bomSum.ToString("N2"));
                             });
                         });
 
-                        // --- 3. ТАБЛИЦА BOP ---
-                        col.Item().Text("3. Технологические операции (BOP)").FontSize(12).SemiBold();
+                        // --- 3. TABELLE BOP ---
+                        col.Item().Text("3. Arbeitsgänge (BOP)").FontSize(12).SemiBold();
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns => {
@@ -728,10 +728,10 @@ namespace FinanzRechner.WebUI.Controllers
                                 columns.RelativeColumn((float)1.5); columns.RelativeColumn((float)1.5);
                             });
                             table.Header(header => {
-                                header.Cell().Element(CellStyle).Text("Операция [Оборудование]");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Время");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Тариф");
-                                header.Cell().Element(CellStyle).AlignRight().Text("Стоимость");
+                                header.Cell().Element(CellStyle).Text("Arbeitsgang [Arbeitsplatz]");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Arbeitszeit");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Stundensatz");
+                                header.Cell().Element(CellStyle).AlignRight().Text("Kosten");
                             });
                             foreach (var bop in bopLines)
                             {
@@ -742,22 +742,22 @@ namespace FinanzRechner.WebUI.Controllers
                                 table.Cell().Element(CellStyle).AlignRight().Text(bop.TotalOperationCost.ToString("N2"));
                             }
                             table.Footer(footer => {
-                                footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Итого по работам:");
+                                footer.Cell().ColumnSpan(3).Element(FooterStyle).AlignRight().Text("Gesamtkosten Arbeit:");
                                 footer.Cell().Element(FooterStyle).AlignRight().Text(bopSum.ToString("N2"));
                             });
                         });
 
-                        // --- ФИНАЛЬНЫЙ РАСЧЕТ ---
+                        // --- ENDGÜLTIGE BERECHNUNG ---
                         col.Item().PaddingTop(20).AlignRight().Container().Width(250).Table(table =>
                         {
                             table.ColumnsDefinition(c => { c.RelativeColumn(); c.RelativeColumn(); });
-                            table.Cell().Background(Colors.Blue.Lighten5).Padding(5).Text("ИТОГО СЕБЕСТОИМОСТЬ:").SemiBold();
+                            table.Cell().Background(Colors.Blue.Lighten5).Padding(5).Text("GESAMTKOSTEN:").SemiBold();
                             table.Cell().Background(Colors.Blue.Lighten4).Padding(5).AlignRight().Text($"{(matSum + bomSum + bopSum):N2} BYN").SemiBold();
                         });
                     });
 
                     page.Footer().AlignCenter().Text(x => {
-                        x.Span("Страница "); x.CurrentPageNumber();
+                        x.Span("Seite "); x.CurrentPageNumber();
                     });
                 });
             });
@@ -770,7 +770,7 @@ namespace FinanzRechner.WebUI.Controllers
             static IContainer FooterStyle(IContainer container) => container.PaddingVertical(5).PaddingHorizontal(2);
         }
 
-    [HttpGet]
+        [HttpGet]
     public async Task<IActionResult> ExportToWord(Guid id)
     {
         // ВНИМАНИЕ: Если используете версию 2.0+, может потребоваться лицензия. 
