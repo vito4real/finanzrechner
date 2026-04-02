@@ -649,14 +649,41 @@ namespace FinanzRechner.WebUI.Controllers
             decimal bomSum = bomTree.Sum(x => x.TotalPrice);
             decimal bopSum = bopLines.Sum(l => l.TotalOperationCost);
 
-            var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "80.55.1855.jpg");
-            var imageBytes = System.IO.File.ReadAllBytes(imagePath);
+            // --- IMAGE: привязка к product.Designation ---
+            byte[]? productImageBytes = null;
+            var imageDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img");
+
+            if (Directory.Exists(imageDirectory))
+            {
+                var matchingImage = Directory.EnumerateFiles(imageDirectory, $"{product.Designation}*.*", SearchOption.TopDirectoryOnly)
+                    .FirstOrDefault(f =>
+                    {
+                        var ext = Path.GetExtension(f).ToLowerInvariant();
+                        return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp";
+                    });
+
+                if (!string.IsNullOrWhiteSpace(matchingImage))
+                    productImageBytes = System.IO.File.ReadAllBytes(matchingImage);
+            }
+
+            // --- QR: ссылка на страницу продукта ---
+            var productUrl = Url.Action(nameof(Details), "Products", new { id = product.Id }, Request.Scheme);
+
+            byte[]? qrCodeBytes = null;
+            if (!string.IsNullOrWhiteSpace(productUrl))
+            {
+                using var qrGenerator = new QRCoder.QRCodeGenerator();
+                using var qrData = qrGenerator.CreateQrCode(productUrl, QRCoder.QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new QRCoder.PngByteQRCode(qrData);
+                qrCodeBytes = qrCode.GetGraphic(20);
+            }
 
             var document = QuestPDF.Fluent.Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Margin(40);
+
                     page.Header().Row(row =>
                     {
                         row.RelativeItem().Column(col =>
@@ -669,9 +696,19 @@ namespace FinanzRechner.WebUI.Controllers
                             col.Item().Text($"{product.Name} ({product.Designation})")
                                 .FontSize(12)
                                 .Italic();
+
+                            col.Item().Text(DateTime.Now.ToString("dd.MM.yyyy HH:mm", culture))
+                                .FontSize(9)
+                                .FontColor(Colors.Grey.Darken1);
                         });
 
-                        row.ConstantItem(240).Height(120).Image(imageBytes);
+                        if (productImageBytes is not null)
+                        {
+                            row.ConstantItem(150)
+                                .Height(85)
+                                .PaddingLeft(10)
+                                .Image(productImageBytes, ImageScaling.FitArea);
+                        }
                     });
 
                     page.Content().PaddingVertical(10).Column(col =>
@@ -701,8 +738,8 @@ namespace FinanzRechner.WebUI.Controllers
                             foreach (var m in product.ProductMaterials)
                             {
                                 table.Cell().Element(CellStyle).Text(m.Material.Name);
-                                table.Cell().Element(CellStyle).AlignRight().Text($"{m.Quantity.ToString("N2", culture)} l");
-                                table.Cell().Element(CellStyle).AlignRight().Text($"{m.Material.UnitPrice.ToString("N2", culture)} BYN/l");
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{m.Quantity.ToString("N2", culture)}");
+                                table.Cell().Element(CellStyle).AlignRight().Text($"{m.Material.UnitPrice.ToString("N2", culture)}");
                                 table.Cell().Element(CellStyle).AlignRight().Text((m.Quantity * m.Material.UnitPrice).ToString("N2", culture));
                             }
 
@@ -785,22 +822,41 @@ namespace FinanzRechner.WebUI.Controllers
                             });
                         });
 
-                        // --- ENDGÜLTIGE BERECHNUNG ---
-                        col.Item().PaddingTop(20).AlignRight().Container().Width(250).Table(table =>
+                        // --- ИТОГ + QR справа, как на желаемом макете ---
+                        col.Item().PaddingTop(20).Row(row =>
                         {
-                            table.ColumnsDefinition(c =>
-                            {
-                                c.RelativeColumn();
-                                c.RelativeColumn();
-                            });
+                            row.RelativeItem();
 
-                            table.Cell().Background(Colors.Blue.Lighten5).Padding(5).Text("Gesamtkosten:").SemiBold();
-                            table.Cell()
-                                .Background(Colors.Blue.Lighten4)
-                                .Padding(5)
-                                .AlignRight()
-                                .Text($"{(matSum + bomSum + bopSum).ToString("N2", culture)} BYN")
-                                .SemiBold();
+                            row.ConstantItem(290).Column(right =>
+                            {
+                                right.Spacing(8);
+
+                                right.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(c =>
+                                    {
+                                        c.RelativeColumn();
+                                        c.RelativeColumn();
+                                    });
+
+                                    table.Cell().Background(Colors.Blue.Lighten5).Padding(5).Text("Gesamtkosten:").SemiBold();
+                                    table.Cell()
+                                        .Background(Colors.Blue.Lighten4)
+                                        .Padding(5)
+                                        .AlignRight()
+                                        .Text($"{(matSum + bomSum + bopSum).ToString("N2", culture)} BYN")
+                                        .SemiBold();
+                                });
+
+                                if (qrCodeBytes is not null)
+                                {
+                                    right.Item()
+                                        .AlignRight()
+                                        .Width(80)
+                                        .Height(80)
+                                        .Image(qrCodeBytes, ImageScaling.FitArea);
+                                }
+                            });
                         });
                     });
 
