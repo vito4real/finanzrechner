@@ -1,4 +1,4 @@
-﻿namespace FinanzRechner.WebUI.ViewModels.Products.Order
+﻿namespace FinanzRechner.WebUI.ViewModels.Order
 {
     public class OrderDetailsViewModel
     {

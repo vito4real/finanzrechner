@@ -1,8 +1,7 @@
 ﻿using FinanzRechner.Domain.Entities;
 using FinanzRechner.Infrastructure;
-using FinanzRechner.WebUI.ViewModels;
+using FinanzRechner.WebUI.ViewModels.Order;
 using FinanzRechner.WebUI.ViewModels.Products.Bom;
-using FinanzRechner.WebUI.ViewModels.Products.Order;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;

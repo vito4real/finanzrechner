@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinanzRechner.Domain.Entities;
 using FinanzRechner.Infrastructure;
-using FinanzRechner.WebUI.ViewModels.Products.Client;
+using FinanzRechner.WebUI.ViewModels.Client;
 
 namespace FinanzRechner.WebUI.Controllers
 {

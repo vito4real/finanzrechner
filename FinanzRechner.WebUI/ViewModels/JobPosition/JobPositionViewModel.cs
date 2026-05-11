@@ -1,7 +1,7 @@
 ﻿using FinanzRechner.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace FinanzRechner.WebUI.ViewModels.Products.JobPosition
+namespace FinanzRechner.WebUI.ViewModels.JobPosition
 {
     public class JobPositionViewModel
     {

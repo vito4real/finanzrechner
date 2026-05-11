@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FinanzRechner.WebUI.ViewModels
+namespace FinanzRechner.WebUI.ViewModels.Order
 {
     public class OrderProductLineViewModel
     {

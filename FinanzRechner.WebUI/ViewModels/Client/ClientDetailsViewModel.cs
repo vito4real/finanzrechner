@@ -1,4 +1,4 @@
-﻿namespace FinanzRechner.WebUI.ViewModels.Products.Client
+﻿namespace FinanzRechner.WebUI.ViewModels.Client
 {
     public class ClientDetailsViewModel
     {

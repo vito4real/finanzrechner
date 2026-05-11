@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
-namespace FinanzRechner.WebUI.ViewModels.Products.Order
+namespace FinanzRechner.WebUI.ViewModels.Order
 {
     public class OrderEditViewModel
     {

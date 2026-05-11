@@ -1,4 +1,4 @@
-﻿namespace FinanzRechner.WebUI.ViewModels.Products.Material
+﻿namespace FinanzRechner.WebUI.ViewModels.Material
 {
     public class MaterialDetailsViewModel
     {
